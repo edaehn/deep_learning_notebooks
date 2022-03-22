@@ -73,8 +73,11 @@ def get_data(directory="10_food_classes_10_percent"):
 
 # Normalise training and testing data.
 # Augment the training data
-def preprocess_and_augment_data(train_dir, test_dir):
+def preprocess_and_augment_data(directory="sample_data/birds"):
   # Create ImageDataGenerator training instance with data augmentation
+  train_dir = directory + "/train/"
+  test_dir = directory + "/test/"
+
   train_datagen_augmented = ImageDataGenerator(rescale=1/255.,
                                              rotation_range=0.2,
 
@@ -83,7 +86,7 @@ def preprocess_and_augment_data(train_dir, test_dir):
                                              height_shift_range=0.2,
                                              horizontal_flip=True)
 
-  train_data_augmented = train_datagen_augmented.flow_from_directory("sample_data/birds/train/",
+  train_data_augmented = train_datagen_augmented.flow_from_directory(train_dir",
                                              target_size=(224, 224),
                                              batch_size=32,
                                              class_mode="categorical",
@@ -98,8 +101,7 @@ def preprocess_and_augment_data(train_dir, test_dir):
                                              shuffle=True)
   return train_data_augmented, test_data
 
-train_data_augmented, test_data = preprocess_and_augment_data(train_dir="sample_data/birds/train/",
-                                        test_dir="sample_data/birds/test/")
+# train_data_augmented, test_data = preprocess_and_augment_data(directory="sample_data/birds")
 
 def plot_loss_curves(history):
   """
