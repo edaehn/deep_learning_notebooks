@@ -86,7 +86,7 @@ def preprocess_and_augment_data(directory="sample_data/birds"):
                                              height_shift_range=0.2,
                                              horizontal_flip=True)
 
-  train_data_augmented = train_datagen_augmented.flow_from_directory(train_dir",
+  train_data_augmented = train_datagen_augmented.flow_from_directory(train_dir,
                                              target_size=(224, 224),
                                              batch_size=32,
                                              class_mode="categorical",
