@@ -21,8 +21,17 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import datetime
 import matplotlib.image as mpimg
 import pathlib
+import zipfile
 
 ############################### Exploring and preparing data
+
+# Download the dataset with wget:
+# !wget https://storage.googleapis.com/ztm_tf_course/food_vision/10_food_classes_10_percent.zip
+
+def unzip_file(filename="10_food_classes_10_percent.zip"):
+    zip_ref = zipfile.ZipFile(filename)
+    zip_ref.extractall()
+    zip_ref.close()
 
 def walk_directory(directory):
     # Walk through a data directory and list number of files
