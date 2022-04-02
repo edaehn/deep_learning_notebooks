@@ -230,6 +230,17 @@ def create_tensorboard_callback(dir_name, experiment_name):
   print(f"Saving TensorBoard log files to: {log_dir}")
   return tensorboard_callback
 
+# Create a model check-point callback, only saving the model weights
+def create_checkpoint_callback(checkpoint_path=\
+          "tmp/ten_percent_checkpoints_weights/checkpoint.ckpt"):
+  checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
+                                                           save_weights_only=True,
+                                                           save_freq="epoch",
+                                                           save_best_only=False,
+                                                           verbose=1)
+
+  return checkpoint_callback
+
 ############################### Model Creation
 
 # Create models from a URL
