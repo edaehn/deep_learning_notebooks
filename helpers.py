@@ -243,6 +243,9 @@ def create_checkpoint_callback(checkpoint_path=\
 
 ############################### Model Creation
 
+# Define our image shape
+IMAGE_SHAPE=(224, 224)
+
 # Create models from a URL
 def create_model(model_url, num_classes=10):
     """
