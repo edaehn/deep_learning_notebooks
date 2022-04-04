@@ -151,18 +151,18 @@ def view_random_image(target_dir, target_class):
   return img
 # img = view_random_image(target_dir="sample_data/birds/train/", target_class="ALPINE CHOUGH")
 
-def show_five_birds():
+def show_five_birds(dataset_path="sample_data/birds"):
     plt.figure(figsize=(20, 4))
     plt.subplot(1, 5, 1)
-    bird_img = view_random_image("sample_data/birds/train/", "SHOEBILL")
+    bird_img = view_random_image(dataset_path+"/train/", "SHOEBILL")
     plt.subplot(1, 5, 2)
-    bird_img = view_random_image("sample_data/birds/train/", "RED BEARDED BEE EATER")
+    bird_img = view_random_image(dataset_path+"/train/", "RED BEARDED BEE EATER")
     plt.subplot(1, 5, 3)
-    bird_img = view_random_image("sample_data/birds/train/", "POMARINE JAEGER")
+    bird_img = view_random_image(dataset_path+"/train/", "POMARINE JAEGER")
     plt.subplot(1, 5, 4)
-    bird_img = view_random_image("sample_data/birds/train/", "WATTLED CURASSOW")
+    bird_img = view_random_image(dataset_path+"/train/", "WATTLED CURASSOW")
     plt.subplot(1, 5, 5)
-    bird_img = view_random_image("sample_data/birds/train/", "STORK BILLED KINGFISHER")
+    bird_img = view_random_image(dataset_path+"/train/", "STORK BILLED KINGFISHER")
 
 # Prepare an image for prediction
 def load_and_prepare_image(filename, img_shape=224):
