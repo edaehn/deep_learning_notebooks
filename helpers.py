@@ -1,5 +1,6 @@
 ############################################################
 #           Helper functions for Deep Learning experiments
+#  Adopted from the https://www.udemy.com/course/tensorflow-developer-certificate-machine-learning-zero-to-mastery/
 ############################################################
 
 # Importing required libraries
