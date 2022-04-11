@@ -155,7 +155,7 @@ def plot_loss_curves(history, metric="accuracy"):
     :param metric: defaults to accuracy
     :return: True if the metric data is in the history object, otherwise False
     """
-    if not(metric is in history.history.keys()):
+    if not(metric in history.history.keys()):
         return False
 
     loss = history.history["loss"]
