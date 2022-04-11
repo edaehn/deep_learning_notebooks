@@ -155,7 +155,7 @@ def plot_loss_curves(history, metric="accuracy"):
     :param metric: defaults to accuracy
     :return: True if the metric data is in the history object, otherwise False
     """
-    if metric is not in history.history.keys():
+    if not(metric is in history.history.keys()):
         return False
 
     loss = history.history["loss"]
@@ -196,9 +196,10 @@ def view_random_image(target_dir="sample_data/birds/train/", \
     """
 
     # Setup the target directory
-    # target_folder = target_dir + target_class
-    if not(os.path(target_folder) and os.path.isdir(target_folder)):
-        return False
+    target_folder = target_dir + target_class
+    print(target_folder)
+    if not os.path.isdir(target_folder):
+       return False
 
     # Get a random image path
     random_image = random.sample(os.listdir(target_folder), 1)
@@ -219,23 +220,24 @@ def view_random_image(target_dir="sample_data/birds/train/", \
 
 def show_five_birds(dataset_path="sample_data/birds"):
     """
-    Shows five random training images (birds) from a directory with training and
+    Shows five random training images (birds) from a directory (should contain '/train' subdirectory) with training and
     test datasets
     :param dataset_path: Full-path to images dataset
     :return:
     """
-    
+
+    # Select five random images from five random categories (respective to
+    # the subdirectory names)
+    image_filenames = []
+    target_classes = random.choices(os.listdir(dataset_path + "/train/"), k=5)
+
     plt.figure(figsize=(20, 4))
-    plt.subplot(1, 5, 1)
-    bird_img = view_random_image(dataset_path+"/train/", "SHOEBILL")
-    plt.subplot(1, 5, 2)
-    bird_img = view_random_image(dataset_path+"/train/", "RED BEARDED BEE EATER")
-    plt.subplot(1, 5, 3)
-    bird_img = view_random_image(dataset_path+"/train/", "POMARINE JAEGER")
-    plt.subplot(1, 5, 4)
-    bird_img = view_random_image(dataset_path+"/train/", "WATTLED CURASSOW")
-    plt.subplot(1, 5, 5)
-    bird_img = view_random_image(dataset_path+"/train/", "STORK BILLED KINGFISHER")
+    count = 1
+    for target_class in target_classes:
+        plt.subplot(1, 5, count)
+        bird_img = view_random_image(dataset_path + "/train/", target_class);
+        count +=1
+
 
 # Prepare an image for prediction
 def load_and_prepare_image(filename, img_shape=224):
