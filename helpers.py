@@ -241,29 +241,39 @@ def show_five_birds(dataset_path="sample_data/birds"):
 
 # Prepare an image for prediction
 def load_and_prepare_image(filename, img_shape=224):
-  """
-  Preparing an image for image prediction task.
-  Reads and reshapes the tensor into needed shape.
-  """
+    """
+    Preparing an image for image prediction task.
+    Reads and reshapes the tensor into needed shape.
+    Image tensor is rescaled.
+    :param filename: full-path filename of the image
+    :param img_shape: required shape of the output image
+    :return: image tensor
+    """
 
-  # Read the image
-  img = tf.io.read_file(filename)
+    # Read the image
+    img = tf.io.read_file(filename)
 
-  # Decode the image into tensorflow
-  img = tf.image.decode_image(img)
+     # Decode the image into tensorflow
+    img = tf.image.decode_image(img)
 
-  # Resize the image
-  img = tf.image.resize(img, size = [img_shape, img_shape])
+    # Resize the image
+    img = tf.image.resize(img, size = [img_shape, img_shape])
 
-  # Rescale the image
-  img = img/255.
+    # Rescale the image
+    img = img/255.
 
-  return img
+    return img
 
 def predict_and_plot(model, filename, class_names, known_label=False):
     """
-    Imports an image at filename, makes the prediction,
+    Loads an image stored at filename, makes the prediction,
     plots the image with the predicted class as the title.
+    :param model:  Multi-class/Binary classification model.
+    :param filename: filename of the image to predict.
+    :param class_names: class names of the model.
+    :param known_label: if we want to compare the known
+    label with the predicted label.
+    :return:
     """
 
     # import the target image and preprocess it
@@ -292,9 +302,7 @@ def predict_and_plot(model, filename, class_names, known_label=False):
     else:
         plt.title(f"Predicted: {predicted_class}")
     plt.axis(False)
-# predict_and_plot(baseline_model,
-#                  filename="/content/sample_data/birds/test/ALPINE CHOUGH/2.jpg",
-#                  class_names=class_names, known_label="ALPINE CHOUGH")
+
 
 ############################### Callbacks
 
@@ -318,11 +326,7 @@ def create_checkpoint_callback(checkpoint_path=\
 
 ############################### Model Creation
 
-# Define our image shape
-IMAGE_SHAPE=(224, 224)
-
-# Create models from a URL
-def create_model(model_url, num_classes=10):
+def create_model(model_url, num_classes=10, IMAGE_SHAPE=(224, 224)):
     """
     Takes a TensorFlow Hub URL and creates a Keras Sequential model with it.
 
@@ -330,6 +334,7 @@ def create_model(model_url, num_classes=10):
       model_url(str): A TensorFlow Hub feature extraction URL.
       num_classes(int): Number of output neurons in the output layer,
       should be equal to number of target classes, default 10.
+      IMAGE_SHAPE: shape of images.
 
     Returns:
       An uncompiled Keras Sequential model with model_url as feature extractor
