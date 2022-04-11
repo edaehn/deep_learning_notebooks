@@ -1,9 +1,11 @@
 ############################################################
 #           Helper functions for Deep Learning experiments
-#  Adopted from the https://www.udemy.com/course/tensorflow-developer-certificate-machine-learning-zero-to-mastery/
+#  Some code snips are adopted from the
+#  https://www.udemy.com/course/tensorflow-developer-certificate-machine-learning-zero-to-mastery/
 ############################################################
 
-# Importing required libraries
+############################### Importing required libraries
+
 import tensorflow as tf
 import tensorflow_hub as hub
 from tensorflow.keras import layers
@@ -24,62 +26,102 @@ import matplotlib.image as mpimg
 import pathlib
 import zipfile
 
+
 ############################### Exploring and preparing data
 
-# Download the dataset with wget:
-# !wget https://storage.googleapis.com/ztm_tf_course/food_vision/10_food_classes_10_percent.zip
-
 def unzip_file(filename="10_food_classes_10_percent.zip"):
-    zip_ref = zipfile.ZipFile(filename)
-    zip_ref.extractall()
-    zip_ref.close()
+    """
+    Unzips a file with a defined full-path filename.
+    :param filename: A filename with absolute path
+    :return:
+    """
+    try:
+        zip_ref = zipfile.ZipFile(filename)
+        zip_ref.extractall()
+        zip_ref.close()
+    except Exception as error:
+        print(str(error))
+        return False
+    else:
+        return True
+
 
 def walk_directory(directory):
-    # Walk through a data directory and list number of files
+    """
+    Walk through a data directory and list the number of files.
+    :param directory: Full path to the directory
+    :return:
+    """
     for dirpath, dirnames, filenames in os.walk(directory):
         print(f"There are {len(dirnames)} directories and '{len(filenames)}'' files in {dirpath}.")
 
-# Get the classnames programatically
+
 def get_classnames(dataset_train_directory="sample_data/birds/train/"):
-  # Get the classnames programatically
+  """
+  Get the class names based on names of subdirectories found in the directory
+  with the training dataset.
+  :param dataset_train_directory: Full path to the directory with training dataset
+  :return: a sorted list of class names
+  """
   data_dir = pathlib.Path(dataset_train_directory)
   class_names = np.array(sorted([item.name for item in data_dir.glob("*")]))
   print(class_names)
   return class_names
-# class_names = get_classnames()
 
-def get_data(directory="10_food_classes_10_percent"):
-    # HYPERPARAMETERS
-    IMAGE_SHAPE = (224, 224)
-    BATCH_SIZE = 32
+
+def get_data(directory="10_food_classes_10_percent",
+             IMAGE_SHAPE = (224, 224),
+             BATCH_SIZE = 32,
+             class_mode="categorical",
+             rescale=1 / 255.):
+    """
+    With the help of ImageDataGenerator, get_data() returns training and
+    test datasets based on an input directory file contents.
+    :param directory: Full path to a directory with /train and /test subdirectories
+    containing respective datasets
+    :param IMAGE_SHAPE: defaults to (224, 224) image size
+    :param BATCH_SIZE: number of batches to preprocess
+    :param class_mode: defaults to "categorical"
+    :param rescale: rescales images from RGB-based values to values [0..1]
+    :return: train_data, test_data for training and test datasets
+    """
 
     train_dir = directory + "/train/"
     test_dir = directory + "/test/"
 
-    train_datagen = ImageDataGenerator(rescale=1 / 255.)
-    test_datagen = ImageDataGenerator(rescale=1 / 255.)
+    train_datagen = ImageDataGenerator(rescale=rescale)
+    test_datagen = ImageDataGenerator(rescale=rescale)
 
     print("Training images:")
     train_data = train_datagen.flow_from_directory(train_dir,
                                                               target_size=IMAGE_SHAPE,
                                                               batch_size=BATCH_SIZE,
-                                                              class_mode="categorical")
+                                                              class_mode=class_mode)
 
     print("Testing images:")
     test_data = test_datagen.flow_from_directory(test_dir,
                                                             target_size=IMAGE_SHAPE,
                                                             batch_size=BATCH_SIZE,
-                                                            class_mode="categorical")
+                                                            class_mode=class_mode)
     return train_data, test_data
 
-# Normalise training and testing data.
-# Augment the training data
-def preprocess_and_augment_data(directory="sample_data/birds"):
-  # Create ImageDataGenerator training instance with data augmentation
-  train_dir = directory + "/train/"
-  test_dir = directory + "/test/"
 
-  train_datagen_augmented = ImageDataGenerator(rescale=1/255.,
+def preprocess_and_augment_data(directory="sample_data/birds"):
+    """
+    Creating augmented training dataset and test dataset based on the file
+    contents of an input directory. Both datasets are normalised.
+    The training dataset is augmented with rotation, zooming, horisontal flips,
+    width and height shifts.
+    :param directory: A full-path to the directory with images
+    :return: train_data_augmented, test_data for training (augmented)
+    and test datasets
+    """
+
+    train_dir = directory + "/train/"
+    test_dir = directory + "/test/"
+
+    # Create ImageDataGenerator training instance with data augmentation
+    train_datagen_augmented = ImageDataGenerator(rescale=1/255.,
                                              rotation_range=0.2,
 
                                              zoom_range=0.2,
@@ -87,72 +129,102 @@ def preprocess_and_augment_data(directory="sample_data/birds"):
                                              height_shift_range=0.2,
                                              horizontal_flip=True)
 
-  train_data_augmented = train_datagen_augmented.flow_from_directory(train_dir,
+    train_data_augmented = train_datagen_augmented.flow_from_directory(train_dir,
                                              target_size=(224, 224),
                                              batch_size=32,
                                              class_mode="categorical",
                                              shuffle=True)
-  # Rescale (normalisation)
-  test_datagen = ImageDataGenerator(rescale=1/255.)
+    # Rescale (normalisation)
+    test_datagen = ImageDataGenerator(rescale=1/255.)
 
-  test_data = test_datagen.flow_from_directory(test_dir,
+    test_data = test_datagen.flow_from_directory(test_dir,
                                              target_size=(224, 224),
                                              batch_size=32,
                                              class_mode="categorical",
                                              shuffle=True)
-  return train_data_augmented, test_data
+    return train_data_augmented, test_data
 
-# train_data_augmented, test_data = preprocess_and_augment_data(directory="sample_data/birds")
 
-def plot_loss_curves(history):
-  """
-  Returns separate loss curves for training and validation matrix
-  """
-  loss = history.history["loss"]
-  val_loss = history.history["val_loss"]
+############################### Plotting performance curves
 
-  accuracy = history.history["accuracy"]
-  val_accuracy = history.history["val_accuracy"]
+def plot_loss_curves(history, metric="accuracy"):
+    """
+    Plot loss and performance (defaults to accuracy) curves for
+    training and validation history
+    :param history: History of model fitting
+    :param metric: defaults to accuracy
+    :return: True if the metric data is in the history object, otherwise False
+    """
+    if metric is not in history.history.keys():
+        return False
 
-  epochs = range(len(history.history["loss"]))
+    loss = history.history["loss"]
+    val_loss = history.history["val_loss"]
 
-  # Plot loss
-  plt.plot(epochs, loss, label="Training loss")
-  plt.plot(epochs, val_loss, label="Validation loss")
-  plt.title("Loss")
-  plt.xlabel("epochs")
-  plt.legend()
+    accuracy = history.history[metric]
+    val_accuracy = history.history["val_"+metric]
 
-  # Plot the accuracy
-  plt.figure();
-  plt.plot(epochs, accuracy, label="Training accuracy")
-  plt.plot(epochs, val_accuracy, label="Validation accuracy")
-  plt.title("Accuracy")
-  plt.xlabel("epochs")
-  plt.legend()
+    epochs = range(len(history.history["loss"]))
 
-# Visualise our images
-def view_random_image(target_dir, target_class):
-  # Setup the target directory
-  target_folder = target_dir + target_class
+    # Plot loss
+    plt.plot(epochs, loss, label="Training loss")
+    plt.plot(epochs, val_loss, label="Validation loss")
+    plt.title("Loss")
+    plt.xlabel("epochs")
+    plt.legend()
 
-  # Get a random image path
-  random_image = random.sample(os.listdir(target_folder), 1)
-  print(random_image)
+    # Plot the accuracy or other metric
+    plt.figure();
+    plt.plot(epochs, accuracy, label="Training "+metric)
+    plt.plot(epochs, val_accuracy, label="Validation "+metric)
 
-  # Read and plot the image
-  img = mpimg.imread(target_folder + "/" + random_image[0])
-  plt.imshow(img)
-  plt.title(target_class)
-  plt.axis("off");
+    plt.title(metric)
+    plt.xlabel("epochs")
+    plt.legend()
+    return True
 
-  # Show the image shape
-  print(f"Image shape: {img.shape}")
 
-  return img
-# img = view_random_image(target_dir="sample_data/birds/train/", target_class="ALPINE CHOUGH")
+############################### Visualising  images
+
+def view_random_image(target_dir="sample_data/birds/train/", \
+                      target_class="ALPINE CHOUGH"):
+    """
+    Show and return a random image from target directory and class subdirectory.
+    :param target_dir: a directory with a training dataset
+    :param target_class: a subdirectory inside of the training dataset
+    :return: False if the dircetory does not exists, ortherwise returns image
+    """
+
+    # Setup the target directory
+    # target_folder = target_dir + target_class
+    if not(os.path(target_folder) and os.path.isdir(target_folder)):
+        return False
+
+    # Get a random image path
+    random_image = random.sample(os.listdir(target_folder), 1)
+    print(random_image)
+
+    # Read and plot the image
+    img = mpimg.imread(target_folder + "/" + random_image[0])
+    plt.imshow(img)
+    plt.title(target_class)
+    plt.axis("off");
+
+    # Show the image shape
+    print(f"Image shape: {img.shape}")
+
+    # Return the image
+    return img
+
 
 def show_five_birds(dataset_path="sample_data/birds"):
+    """
+    Shows five random training images (birds) from a directory with training and
+    test datasets
+    :param dataset_path: Full-path to images dataset
+    :return:
+    """
+    
     plt.figure(figsize=(20, 4))
     plt.subplot(1, 5, 1)
     bird_img = view_random_image(dataset_path+"/train/", "SHOEBILL")
