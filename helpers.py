@@ -69,7 +69,36 @@ def get_classnames(dataset_train_directory="sample_data/birds/train/"):
   return class_names
 
 
-def get_data(directory="10_food_classes_10_percent",
+def get_image_data(dataset_path="sample_data/birds", IMG_SIZE = (224, 224)):
+    """
+    Get image datasets for training and testing.
+    :param dataset_path: full-path to the directory containing /train and /test subdirectories.
+    :param IMG_SIZE: defaults to (224, 224) tuple.
+    :return: train_data, test_data
+    """
+
+    # Defining train and test directories
+    train_directory = dataset_path + "/train"
+    test_directory = dataset_path + "/test"
+
+    # Setup data inputs
+    train_data = tf.keras.preprocessing.image_dataset_from_directory(
+        train_directory,
+        label_mode="categorical",
+        image_size=IMG_SIZE
+    )
+
+    test_data = tf.keras.preprocessing.image_dataset_from_directory(
+        test_directory,
+        label_mode="categorical",
+        image_size=IMG_SIZE
+    )
+
+    # Return datasets
+    return train_data, test_data
+
+
+def get_normalised_image_data(directory="10_food_classes_10_percent",
              IMAGE_SHAPE = (224, 224),
              BATCH_SIZE = 32,
              class_mode="categorical",
