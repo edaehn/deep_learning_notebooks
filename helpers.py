@@ -269,7 +269,7 @@ def show_five_birds(dataset_path="sample_data/birds"):
 
 
 # Prepare an image for prediction
-def load_and_prepare_image(filename, img_shape=224):
+def load_and_prepare_image(filename, img_shape=224, rescale=True):
     """
     Preparing an image for image prediction task.
     Reads and reshapes the tensor into needed shape.
@@ -289,11 +289,12 @@ def load_and_prepare_image(filename, img_shape=224):
     img = tf.image.resize(img, size = [img_shape, img_shape])
 
     # Rescale the image
-    img = img/255.
+    if rescale:
+        img = img/255.
 
     return img
 
-def predict_and_plot(model, filename, class_names, known_label=False):
+def predict_and_plot(model, filename, class_names, known_label=False, rescale=True):
     """
     Loads an image stored at filename, makes the prediction,
     plots the image with the predicted class as the title.
@@ -306,14 +307,14 @@ def predict_and_plot(model, filename, class_names, known_label=False):
     """
 
     # import the target image and preprocess it
-    img = load_and_prepare_image(filename)
+    img = load_and_prepare_image(filename, rescale=rescale)
 
     # Make a prediction
     predicted = model.predict(tf.expand_dims(img, axis=0))
 
     # Get the predicted class
     # Check for multi-class classification
-    print(predicted)
+    # print(predicted)
     if len(predicted[0])>1:
       predicted_class = class_names[tf.argmax(predicted[0])]
     else:
@@ -322,7 +323,11 @@ def predict_and_plot(model, filename, class_names, known_label=False):
 
     # Plot the image and predicted class
     plt.figure(figsize=(5,5))
-    plt.imshow(img)
+    if rescale:
+      plt.imshow(img);
+    else:
+      plt.imshow(img/255.);
+
     if known_label:
         if (known_label == predicted_class):
             plt.title(f"Predicted correctly: {predicted_class}")
