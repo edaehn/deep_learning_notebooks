@@ -213,6 +213,53 @@ def plot_loss_curves(history, metric="accuracy"):
     return True
 
 
+def compare_histories(original_history, new_history, initial_epochs=5):
+    """
+    Compares two TensorFlow History objects.
+    :param original_history: original history object;
+    :param new_history: new history object;
+    :param initial_epochs: number of epochs in the original history;
+    :return: 
+    """
+    # Get original history measurements
+    accuracy = original_history.history["accuracy"]
+    loss = original_history.history["loss"]
+
+    # Validation accuracy and loss
+    val_accuracy = original_history.history["val_accuracy"]
+    val_loss = original_history.history["val_loss"]
+
+    # Combine original history metrics with new history metrics
+    total_accuracy = accuracy + new_history.history["accuracy"]
+    total_loss = loss + new_history.history["loss"]
+
+    # Combine original history with new history metrics for validation tests
+    total_val_accuracy = val_accuracy + new_history.history["val_accuracy"]
+    total_val_loss = val_loss + new_history.history["val_loss"]
+
+    # Draw plots for accuracy
+    plt.figure(figsize=(8, 8))
+    plt.subplot(2, 1, 1)
+    plt.plot(total_accuracy, label="Training Accuracy")
+    plt.plot(total_val_accuracy, label="Validation Accuracy")
+
+    # Plot a line where the fine-tuning started
+    plt.plot([initial_epochs-1, initial_epochs-1], plt.ylim(), label="Start Fine-tuning")
+    plt.legend(loc="lower right")
+    plt.title("Training and Validation Accuracy")
+
+    # Draw plots for loss
+    plt.figure(figsize=(8, 8))
+    plt.subplot(2, 1, 2)
+    plt.plot(total_loss, label="Training Loss")
+    plt.plot(total_val_loss, label="Validation Loss")
+
+    # Plot a line where the fine-tuning started
+    plt.plot([initial_epochs-1, initial_epochs-1], plt.ylim(), label="Start Fine-tuning")
+    plt.legend(loc="upper right")
+    plt.title("Training and Validation Loss")
+
+
 ############################### Visualising  images
 
 def view_random_image(target_dir="sample_data/birds/train/", \
