@@ -276,6 +276,7 @@ def load_and_prepare_image(filename, img_shape=224, rescale=True):
     Image tensor is rescaled.
     :param filename: full-path filename of the image
     :param img_shape: required shape of the output image
+    :param rescale: is True when we return normalised image tensor
     :return: image tensor
     """
 
