@@ -421,7 +421,7 @@ def create_model(model_url, num_classes=10, IMAGE_SHAPE=(224, 224)):
       IMAGE_SHAPE: shape of images.
 
     Returns:
-      An uncompiled Keras Sequential model with model_url as feature extractor
+      A compiled Keras Sequential model with model_url as feature extractor
       layer and Dense output layer with num_classes output neurons.
     """
     # Download the pretrained model and save it as a Keras layer
@@ -456,3 +456,61 @@ data_augmentation = Sequential([
                     # Rescaling(1./255) # For models like ResNet50 but not for EffecientNet (having scaling built-in)
 ], name="data_augmentation")
 
+############################### An EffecientNetB0-based baseline model
+
+def create_baseline_model(input_shape=(224, 224, 3), \
+                          number_of_outputs=400, \
+                          augment_data=True):
+    """
+    Builds a headless (no top layers) functional EffecientNetB0 model with
+    own output layer. It uses transfer learning feature extraction.
+
+    Args:
+      input_shape: shape of images.
+      number_of_outputs(int): number of output neurons in the output layer.
+      augment_data: when equals to True we do data augmentation.
+
+    Returns:
+      A compiled functional feature extraction model with number_of_outputs
+      outputs.
+    """
+
+    # Setup the baseline model and freeze its layers
+    baseline_model = tf.keras.applications.EfficientNetB0(include_top=False)
+    baseline_model.trainable = False
+
+    # Create an input layer
+    inputs = layers.Input(shape=input_shape, name="input_layer")
+
+    # Add in data augmentation Sequential model as a layer
+    if augment_data:
+        x = data_augmentation(inputs)  # Uncomment it for data augmentation
+        # Give baseline_model the inputs (after augmentation) and don't train it
+        x = baseline_model(x, training=False)
+    else:
+        x = baseline_model(inputs, training=False)
+
+    # Pool output features of the baseline model
+    x = layers.GlobalAveragePooling2D(name="global_average_pooling")(x)
+
+    # Put a dense layer on as the output
+    outputs = layers.Dense(number_of_outputs, activation="softmax", name="output_layer")(x)
+
+    # Make a model using the inputs and outputs
+    model = tf.keras.Model(inputs, outputs)
+
+    # Compile the mopdel
+    model.compile(loss="categorical_crossentropy",
+                  optimizer=tf.keras.optimizers.Adam(),
+                  metrics=["accuracy"])
+
+    # Fit the model
+    # history_birds_1 = model.fit(train_data,
+    #                               epochs=5,
+    #                              steps_per_epoch=len(train_data),
+    #                              validation_data=test_data,
+    #                              validation_steps=int(0.25*len(test_data)),
+    #                              callbacks=[create_tensorboard_callback(dir_name="transfer_learning_birds",
+    #                                            experiment_name="birds_baseline_model_1")])
+
+    return model
