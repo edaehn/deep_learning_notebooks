@@ -19,8 +19,9 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import Dense, Flatten, Conv2D, MaxPool2D, Activation
 from tensorflow.keras import Sequential
-import os
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.layers import RandomFlip, RandomRotation, RandomZoom, RandomHeight, RandomWidth
+import os
 import datetime
 import matplotlib.image as mpimg
 import pathlib
@@ -397,11 +398,12 @@ def create_tensorboard_callback(dir_name, experiment_name):
 
 # Create a model check-point callback, only saving the model weights
 def create_checkpoint_callback(checkpoint_path=\
-          "tmp/ten_percent_checkpoints_weights/checkpoint.ckpt"):
+          "tmp/ten_percent_checkpoints_weights/checkpoint.ckpt", monitor="val_accuracy"):
   checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
                                                            save_weights_only=True,
                                                            save_freq="epoch",
-                                                           save_best_only=False,
+                                                           monitor=monitor,
+                                                           save_best_only=True,
                                                            verbose=1)
 
   return checkpoint_callback
@@ -441,3 +443,16 @@ def create_model(model_url, num_classes=10, IMAGE_SHAPE=(224, 224)):
                   metrics=["accuracy"])
 
     return model
+
+############################### Adding data augmentation right into the model
+
+# Create data augmentation stage with horisontal flipping, rotations, zooms, etc.
+data_augmentation = Sequential([
+                    RandomFlip("horizontal"),
+                    RandomRotation(0.2),
+                    RandomZoom(0.2),
+                    RandomHeight(0.2),
+                    RandomWidth(0.2)
+                    # Rescaling(1./255) # For models like ResNet50 but not for EffecientNet (having scaling built-in)
+], name="data_augmentation")
+
