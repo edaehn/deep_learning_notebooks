@@ -506,11 +506,121 @@ def create_baseline_model(input_shape=(224, 224, 3), \
 
     # Fit the model
     # history_birds_1 = model.fit(train_data,
-    #                               epochs=5,
+    #                              epochs=5,
     #                              steps_per_epoch=len(train_data),
     #                              validation_data=test_data,
     #                              validation_steps=int(0.25*len(test_data)),
     #                              callbacks=[create_tensorboard_callback(dir_name="transfer_learning_birds",
-    #                                            experiment_name="birds_baseline_model_1")])
+    #                                        experiment_name="birds_baseline_model_1")])
 
     return model
+
+
+############################### Fine-tuning the baseline model
+
+def create_tuned_baseline_model(train_data, test_data, \
+                                layers_to_unfreeze=5, \
+                                input_shape=(224, 224, 3), \
+                                number_of_outputs=400, \
+                                learning_rate=0.001, \
+                                feature_extraction_epochs=5, \
+                                augment_data=True):
+  """
+  Builds a headless (no top layers) functional EffecientNetB0 model with
+  own output layer. It uses transfer learning feature extraction.
+
+  Args:
+    train_data: training dataset.
+    test_data: test dataset.
+    layers_to_unfreeze(int): number of top layers to unfreeze for tuning.
+    input_shape: shape of images.
+    number_of_outputs(int): number of output neurons in the output layer.
+    learning_rate: Starting learning rate for the Adam optimiser.
+    feature_extraction_epochs(int): The number of epochs the feature extraction
+    step is performed. The fine-tuning is done in next feature_extraction_epochs.
+    augment_data: when equals to True we do data augmentation.
+
+  Returns:
+    model: a compiled and trained functional fine-tuned model with number_of_outputs
+    outputs.
+    history_feature_extraction: training history of the feature extraction model.
+    history_fine_tuning: training history of the fine-tuned model.
+  """
+
+  # Setup the baseline model and freeze its layers
+  baseline_model = tf.keras.applications.EfficientNetB0(include_top=False)
+  baseline_model.trainable = False
+
+  # Create an input layer
+  inputs = layers.Input(shape=input_shape, name="input_layer")
+
+  # Add in data augmentation Sequential model as a layer
+  if augment_data:
+    x = data_augmentation(inputs) # Uncomment it for data augmentation
+    # Give baseline_model the inputs (after augmentation) and don't train it
+    x = baseline_model(x, training=False)
+  else:
+    x = baseline_model(inputs, training=False)
+
+  # Pool output features of the baseline model
+  x = layers.GlobalAveragePooling2D(name="global_average_pooling")(x)
+
+  # Put a dense layer on as the output
+  outputs = layers.Dense(number_of_outputs, activation="softmax", name="output_layer")(x)
+
+  # Make a model using the inputs and outputs
+  model = tf.keras.Model(inputs, outputs)
+
+  # Compile the mopdel
+  model.compile(loss="categorical_crossentropy",
+                optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+                metrics=["accuracy"])
+
+  # Fit the model
+  print("----- 1. Feature extraction step -----")
+  history_feature_extraction = model.fit(train_data,
+                                epochs=feature_extraction_epochs,
+                                steps_per_epoch=len(train_data),
+                                validation_data=test_data,
+                                validation_steps=int(0.25*len(test_data)),
+                                callbacks=[create_tensorboard_callback(dir_name="transfer_learning_birds",
+                                           experiment_name="feature_extraction_baseline"),
+                                           create_checkpoint_callback(checkpoint_path=\
+                                           "tmp/feature_extraction_birds/checkpoint.ckpt")])
+  # Evaluate the feature extraction model
+  print("----- 2. Evaluation feature extraction model -----")
+  model.evaluate(test_data)
+
+  # Unfreeze all layers in the baseline model
+  baseline_model.trainable = True
+
+  # Freeze all layers except of the last layers_to_unfreeze
+  for layer in baseline_model.layers[:-layers_to_unfreeze]:
+    layer.trainable = False
+
+  # Re-compile the model
+  model.compile(loss="categorical_crossentropy",
+                # The "rule of thumb" is to recompile the Adam optimiser
+                # with the learning rate lesser in 10x than the initial one.
+                optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate/10),
+                metrics=["accuracy"])
+
+  # Re-fit the tuned model
+  print("----- 3. Fine-tuning step -----")
+  history_fine_tuning = model.fit(train_data,
+                                epochs=feature_extraction_epochs*2,
+                                steps_per_epoch=len(train_data),
+                                validation_data=test_data,
+                                validation_steps=int(0.25*len(test_data)),
+                                initial_epoch=history_feature_extraction.epoch[feature_extraction_epochs-1],
+                                callbacks=[create_tensorboard_callback(dir_name="transfer_learning_birds",
+                                           experiment_name="fine_tuned_baseline"),
+                                           create_checkpoint_callback(checkpoint_path=\
+                                           "tmp/fine_tuning_birds/checkpoint.ckpt")])
+
+
+  # Evaluate the fine-tuned model
+  print("----- 4. Evaluate the fine-tuned -----")
+  model.evaluate(test_data)
+
+  return model, history_feature_extraction, history_fine_tuning
