@@ -627,6 +627,6 @@ def create_tuned_baseline_model(train_data, test_data, \
   # model.save("birds_baseline_fine_tuned")
 
   # To load the saved model
-  # loaded_model = tf.keras.load_model("birds_baseline_fine_tuned")
+  # loaded_model = tf.keras.models.load_model("birds_baseline_fine_tuned")
 
   return model, history_feature_extraction, history_fine_tuning
