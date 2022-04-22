@@ -12,7 +12,7 @@ from tensorflow.keras import layers
 import pandas as pd
 import numpy as np
 from sklearn.metrics import plot_confusion_matrix
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
 import itertools
 import random
 import matplotlib.pyplot as plt
@@ -263,7 +263,7 @@ def compare_histories(original_history, new_history, initial_epochs=5):
 
 ############################### Plotting confusion matrices
 
-def draw_confusion_matrix(y_test, y_preds, classes=None, figsize = (10, 10), text_size=16):
+def draw_confusion_matrix(y_test, y_preds, classes=None, figsize = (10, 10), text_size=16, save_fig=False):
     """
     Creates a confusion matrix figure with y_test, y_preds labels
     :param y_test: test labels.
@@ -309,6 +309,10 @@ def draw_confusion_matrix(y_test, y_preds, classes=None, figsize = (10, 10), tex
     ax.xaxis.set_label_position("bottom")
     ax.xaxis.tick_bottom()
 
+    # Draw x-labels vertically
+    plt.xticks(rotation=70, fontsize=text_size)
+    plt.yticks(fontsize=text_size)
+
     # Adjust label size
     ax.yaxis.label.set_size(text_size)
     ax.xaxis.label.set_size(text_size)
@@ -324,6 +328,72 @@ def draw_confusion_matrix(y_test, y_preds, classes=None, figsize = (10, 10), tex
            color="white" if cm[i, j] > threshold else "black",
            size=text_size/2)
 
+    # Saving the figure to the current directory
+    if save_fig:
+        fig.savefig("confusion_matrix.png")
+
+
+############################### Plotting f1 bar-chart
+
+def plot_f1_barh(model,
+                 test_dataset_directory="sample_data/birds/test",
+                figsize=(12, 200)):
+    """
+    Calculates test accuracy and plots F1-score bar-chart using trained model and
+    data from test_directory.
+    :param model: trained model.
+    :param test_dataset_directory: full path to the test dataset.
+    :param figsize: size of the figure with bar-chart.
+    :return:
+    """
+
+    # Getting test data unshaffled, otherwise we will not a good accuracy score
+    # because of the data order
+    test_data = tf.keras.preprocessing.image_dataset_from_directory(
+        directory=test_dataset_directory,
+        label_mode="categorical",
+        image_size=(224, 224),
+        shuffle=False
+    )
+
+    # Use the model for predictions
+    prediction_probablities = model.predict(test_data, verbose=1)
+
+    # Getting indices of the predicted classes
+    prediction_classes_index = prediction_probablities.argmax(axis=1)
+
+    # Get indices of our test_data BatchDataset
+    test_labels = []
+    for images, labels in test_data.unbatch():
+        test_labels.append(labels.numpy().argmax())
+
+    # Using scikit-learn's accuracy score
+    sklearn_accuracy = accuracy_score(y_true=test_labels,
+                                      y_pred=prediction_classes_index)
+    print(f"Prediction Accuracy on Test Data: {sklearn_accuracy}")
+
+    # Get a dictionary of the classification report
+    classification_report_dictionary = classification_report(y_true=test_labels,
+                                                             y_pred=prediction_classes_index, output_dict=True)
+
+    # Plot all F1-scores
+    f1_scores = {}
+    for key, value in classification_report_dictionary.items():
+        if key == "accuracy":
+            break
+        else:
+            f1_scores[test_data.class_names[int(key)]] = value["f1-score"]
+
+    # Sort values in the ascending order
+    f1_scores_df = pd.DataFrame({"class_names": list(f1_scores.keys()),
+                                 "f1-score": list(f1_scores.values())}).sort_values("f1-score", ascending=False)
+
+    fig, ax = plt.subplots(figsize=figsize)
+    scores = ax.barh(range(len(f1_scores_df)), f1_scores_df["f1-score"].values)
+    ax.set_yticks(range(len(f1_scores_df)))
+    ax.set_yticklabels(f1_scores_df["class_names"])
+    ax.set_xlabel("F1-score")
+    ax.set_title("F1-scores for 400 Bird Species")
 
 ############################### Visualising  images
 
