@@ -470,14 +470,15 @@ def show_five_birds(dataset_path="sample_data/birds"):
 
 
 # Prepare an image for prediction
+
 def load_and_prepare_image(filename, img_shape=224, rescale=True):
     """
     Preparing an image for image prediction task.
     Reads and reshapes the tensor into needed shape.
     Image tensor is rescaled.
-    :param filename: full-path filename of the image
-    :param img_shape: required shape of the output image
-    :param rescale: is True when we return normalised image tensor
+    :param filename (str): full-path filename of the image
+    :param img_shape (int): required shape (height/width) of the output image
+    :param rescale (bool): is True when we return normalised image tensor
     :return: image tensor
     """
 
@@ -485,12 +486,12 @@ def load_and_prepare_image(filename, img_shape=224, rescale=True):
     img = tf.io.read_file(filename)
 
      # Decode the image into tensorflow
-    img = tf.image.decode_image(img)
+    img = tf.image.decode_image(img, channels=3)
 
     # Resize the image
     img = tf.image.resize(img, size = [img_shape, img_shape])
 
-    # Rescale the image
+    # Rescale/normalise  the image
     if rescale:
         img = img/255.
 
@@ -532,9 +533,9 @@ def predict_and_plot(model, filename, class_names, known_label=False, rescale=Tr
 
     if known_label:
         if (known_label == predicted_class):
-            plt.title(f"Predicted correctly: {predicted_class}")
+            plt.title(f"Predicted correctly: {predicted_class}", c="g")
         else:
-            plt.title(f"{known_label } predicted as {predicted_class}")
+            plt.title(f"{known_label } predicted as {predicted_class} (probability = {predicted.max():.2f})", c="r")
     else:
         plt.title(f"Predicted: {predicted_class}")
     plt.axis(False)
