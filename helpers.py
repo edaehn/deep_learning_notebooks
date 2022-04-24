@@ -335,9 +335,25 @@ def draw_confusion_matrix(y_test, y_preds, classes=None, figsize = (10, 10), tex
 
 ############################### Plotting f1 bar-chart
 
+# Placing values on the bar chart
+# a related example for vertical barcharts
+# at: https://matplotlib.org/2.0.2/examples/api/barchart_demo.html
+def autolabel(rects, ax):
+    """
+    Attach a text label in center of each horisonal bar
+    :param rects: a BarContainer object with artists for each class.
+    :param ax: axis of the figure plot.
+    """
+    for rect in rects:
+        width = rect.get_width()
+        ax.text(rect.get_x() + rect.get_width() / 2, rect.get_y() + rect.get_height() / 2.,
+                '%.2f' % width,
+                ha='center', va='center', color='black')
+
+
 def plot_f1_barh(model,
                  test_dataset_directory="sample_data/birds/test",
-                figsize=(12, 200)):
+                 figsize=(12, 80)):
     """
     Calculates test accuracy and plots F1-score bar-chart using trained model and
     data from test_directory.
@@ -388,12 +404,15 @@ def plot_f1_barh(model,
     f1_scores_df = pd.DataFrame({"class_names": list(f1_scores.keys()),
                                  "f1-score": list(f1_scores.values())}).sort_values("f1-score", ascending=False)
 
+    # Plotting bar-chart
     fig, ax = plt.subplots(figsize=figsize)
     scores = ax.barh(range(len(f1_scores_df)), f1_scores_df["f1-score"].values)
+    autolabel(scores, ax)
     ax.set_yticks(range(len(f1_scores_df)))
     ax.set_yticklabels(f1_scores_df["class_names"])
     ax.set_xlabel("F1-score")
     ax.set_title("F1-scores for 400 Bird Species")
+    ax.invert_yaxis()
 
 ############################### Visualising  images
 
