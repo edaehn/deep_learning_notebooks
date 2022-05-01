@@ -497,6 +497,100 @@ def load_and_prepare_image(filename, img_shape=224, rescale=True):
 
     return img
 
+def show_one_wrongly_predicted(filename1, filename2, label1, label2):
+    """
+    Loads two images from their full-path filenames and show them in one plot with own titles corresponding to their
+    class labels.
+    :param filename1: full-path filename to the first image, the test image we are predicting.
+    :param filename2: full-path to the second image relating to the predicted class.
+    :param label1: true class label
+    :param label2: predicted class label.
+    :return:
+    """
+    img1 = tf.io.read_file(filename1)
+    img1 = tf.image.decode_image(img1, channels=3)
+    img2 = tf.io.read_file(filename2)
+    img2 = tf.image.decode_image(img2, channels=3)
+    figure, ax = plt.subplots(1, 2);
+    ax.ravel()[0].imshow(img1);
+    ax.ravel()[0].set_title(label1);
+    ax.ravel()[0].set_axis_off();
+    ax.ravel()[1].imshow(img2);
+    ax.ravel()[1].set_title(label2);
+    ax.ravel()[1].set_axis_off();
+    plt.axis(False);
+
+def show_wrongly_predicted_images(model, dataset_directory="sample_data/birds", top_wrong_predictions_number_to_show=False):
+    # train_data, test_data = get_image_data(dataset_path=dataset_directory, IMG_SIZE=(224, 224))
+
+    # 1. Getting test data unshuffled, otherwise we will not a good accuracy score
+    # because of the data order
+    test_data = tf.keras.preprocessing.image_dataset_from_directory(
+        directory=dataset_directory + "/test",
+        label_mode="categorical",
+        image_size=(224, 224),
+        shuffle=False
+    )
+
+
+    # 2. Use model for predictions
+    prediction_probabilities = model.predict(test_data, verbose=1)
+
+    # Check the predictions we have got
+    # print(f"Number of test rows: {len(test_data)}, \
+            # number of predictions: {len(prediction_probabilities)}, \
+            # shape of predcitions: {prediction_probabilities.shape}, \
+            # the first prediction: {prediction_probabilities[0]}")
+
+    # Getting indices of the predicted classes
+    prediction_classes_index = prediction_probabilities.argmax(axis=1)
+
+    # Get indices of our test_data BatchDataset
+    test_labels = []
+    for images, labels in test_data.unbatch():
+        test_labels.append(labels.numpy().argmax())
+
+    sklearn_accuracy = accuracy_score(y_true=test_labels,
+                                      y_pred=prediction_classes_index)
+
+    # 3. Finding where our model is most wrong
+
+    # Find all files in the test dataset
+    filepaths = []
+    for filepath in test_data.list_files(dataset_directory + "/test/*/*.jpg",
+                                         shuffle=False):
+        filepaths.append(filepath.numpy())
+
+    # Create a dataframe
+    predictions_df = pd.DataFrame({"images_path": filepaths,
+                                   "y_true": test_labels,
+                                   "y_predicted": prediction_classes_index,
+                                   "prediction_confidence": prediction_probablities.max(axis=1),
+                                   "true_classname": [class_names[i] for i in test_labels],
+                                   "predicted_classname": [class_names[i] for i in prediction_classes_index]})
+
+
+    # See which birds predicted correctly/incorrectly
+    predictions_df["correct_prediction"] = predictions_df["y_true"] == predictions_df["y_predicted"]
+
+    # Sort out the dataframe to find the most wrongly predicted classes
+    top_wrong = predictions_df[predictions_df["correct_prediction"] == False].sort_values("prediction_confidence",
+                                                                                              ascending=False)
+
+    # 4. Plot top top_wrong_predictions_number_to_show number of predictions
+
+    top = zip(top_wrong["images_path"], top_wrong["true_classname"], top_wrong["predicted_classname"], top_wrong["prediction_confidence"])
+    print(f"Wrongly predicted {len(top_wrong)} out of {len(predictions_df)}")
+    if top_wrong_predictions_number_to_show:
+        top = top[:top_wrong_predictions_number_to_show]
+
+    for filename1, label1, label2, prob in top:
+        filename2 = "/content/sample_data/birds/train/"+ label2 + "/" + random.sample(os.listdir("/content/sample_data/birds/train/" + label2), 1)[0]
+        # print(f"{filename1}: {filename2}")
+        show_one_wrongly_predicted(filename1, filename2, label1, label2+f" (prob={prob:.2f})")
+
+    return sklearn_accuracy
+
 def predict_and_plot(model, filename, class_names, known_label=False, rescale=True):
     """
     Loads an image stored at filename, makes the prediction,
