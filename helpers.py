@@ -565,7 +565,7 @@ def show_wrongly_predicted_images(model, dataset_directory="sample_data/birds", 
     predictions_df = pd.DataFrame({"images_path": filepaths,
                                    "y_true": test_labels,
                                    "y_predicted": prediction_classes_index,
-                                   "prediction_confidence": prediction_probablities.max(axis=1),
+                                   "prediction_confidence": prediction_probabilities.max(axis=1),
                                    "true_classname": [class_names[i] for i in test_labels],
                                    "predicted_classname": [class_names[i] for i in prediction_classes_index]})
 
