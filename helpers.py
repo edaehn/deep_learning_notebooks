@@ -521,10 +521,7 @@ def show_one_wrongly_predicted(filename1, filename2, label1, label2):
     plt.axis(False);
 
 def show_wrongly_predicted_images(model, dataset_directory="sample_data/birds", top_wrong_predictions_number_to_show=False):
-    # train_data, test_data = get_image_data(dataset_path=dataset_directory, IMG_SIZE=(224, 224))
 
-    # 1. Getting test data unshuffled, otherwise we will not a good accuracy score
-    # because of the data order
     test_data = tf.keras.preprocessing.image_dataset_from_directory(
         directory=dataset_directory + "/test",
         label_mode="categorical",
@@ -532,6 +529,7 @@ def show_wrongly_predicted_images(model, dataset_directory="sample_data/birds", 
         shuffle=False
     )
 
+    class_names = test_data.class_names
 
     # 2. Use model for predictions
     prediction_probabilities = model.predict(test_data, verbose=1)
@@ -591,16 +589,15 @@ def show_wrongly_predicted_images(model, dataset_directory="sample_data/birds", 
 
     return sklearn_accuracy
 
-def predict_and_plot(model, filename, class_names, known_label=False, rescale=True):
+
+def predict_image(model, filename, class_names, rescale=True):
     """
-    Loads an image stored at filename, makes the prediction,
-    plots the image with the predicted class as the title.
+    Loads an image stored at filename, makes the prediction.
     :param model:  Multi-class/Binary classification model.
     :param filename: filename of the image to predict.
     :param class_names: class names of the model.
-    :param known_label: if we want to compare the known
-    label with the predicted label.
-    :return:
+    :param rescale: when True, normalise the image tensor.
+    :return: 1. predicted class name and 2. the prediction probabilities.
     """
 
     # import the target image and preprocess it
@@ -618,6 +615,23 @@ def predict_and_plot(model, filename, class_names, known_label=False, rescale=Tr
       # Binary classification
       predicted_class = class_names[int(tf.round(predicted[0]))]
 
+    return predicted_class, predicted
+
+def predict_and_plot(model, filename, class_names, known_label=False, rescale=True):
+    """
+    Loads an image stored at filename, makes the prediction,
+    plots the image with the predicted class as the title.
+    :param model:  Multi-class/Binary classification model.
+    :param filename: filename of the image to predict.
+    :param class_names: class names of the model.
+    :param known_label: if we want to compare the known
+    label with the predicted label.
+    :param rescale: when True, normalise the image tensor.
+    :return:
+    """
+
+    predicted_class, predicted = predict_image(model=model, filename=filename, class_names=class_names, rescale=rescale)
+
     # Plot the image and predicted class
     plt.figure(figsize=(5,5))
     if rescale:
@@ -627,11 +641,11 @@ def predict_and_plot(model, filename, class_names, known_label=False, rescale=Tr
 
     if known_label:
         if (known_label == predicted_class):
-            plt.title(f"Predicted correctly: {predicted_class}", c="g")
+            plt.title(f"Predicted correctly: {predicted_class} (probability = {predicted.max():.2f})", c="g")
         else:
             plt.title(f"{known_label } predicted as {predicted_class} (probability = {predicted.max():.2f})", c="r")
     else:
-        plt.title(f"Predicted: {predicted_class}")
+        plt.title(f"Predicted: {predicted_class} (probability = {predicted.max():.2f})")
     plt.axis(False)
 
 
