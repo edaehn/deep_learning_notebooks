@@ -597,7 +597,7 @@ def predict_image(model, filename, class_names, rescale=True):
     :param filename: filename of the image to predict.
     :param class_names: class names of the model.
     :param rescale: when True, normalise the image tensor.
-    :return: 1. predicted class name and 2. the prediction probabilities.
+    :return: 1. predicted class name and 2. the prediction probabilities, 3. prepared image.
     """
 
     # import the target image and preprocess it
@@ -615,7 +615,7 @@ def predict_image(model, filename, class_names, rescale=True):
       # Binary classification
       predicted_class = class_names[int(tf.round(predicted[0]))]
 
-    return predicted_class, predicted
+    return predicted_class, predicted, img
 
 def predict_and_plot(model, filename, class_names, known_label=False, rescale=True):
     """
@@ -630,7 +630,7 @@ def predict_and_plot(model, filename, class_names, known_label=False, rescale=Tr
     :return:
     """
 
-    predicted_class, predicted = predict_image(model=model, filename=filename, class_names=class_names, rescale=rescale)
+    predicted_class, predicted, img = predict_image(model=model, filename=filename, class_names=class_names, rescale=rescale)
 
     # Plot the image and predicted class
     plt.figure(figsize=(5,5))
