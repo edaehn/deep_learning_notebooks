@@ -28,7 +28,7 @@ import pathlib
 import zipfile
 
 
-############################### Exploring and preparing data
+############################### Unzipping, walking through dataset directories
 
 def unzip_file(filename="10_food_classes_10_percent.zip"):
     """
@@ -69,6 +69,7 @@ def get_classnames(dataset_train_directory="sample_data/birds/train/"):
   print(class_names)
   return class_names
 
+############################### Getting datasets
 
 def get_image_data(dataset_path="sample_data/birds", IMG_SIZE = (224, 224)):
     """
@@ -135,6 +136,7 @@ def get_normalised_image_data(directory="10_food_classes_10_percent",
                                                             class_mode=class_mode)
     return train_data, test_data
 
+############################### Preprocessing data
 
 def preprocess_and_augment_data(directory="sample_data/birds"):
     """
@@ -474,7 +476,7 @@ def show_five_birds(dataset_path="sample_data/birds"):
 def load_and_prepare_image(filename, img_shape=224, rescale=True):
     """
     Preparing an image for image prediction task.
-    Reads and reshapes the tensor into needed shape.
+    Reads and reshapes the tensor into needed shape (img_shape, img_shape, 3).
     Image tensor is rescaled.
     :param filename (str): full-path filename of the image
     :param img_shape (int): required shape (height/width) of the output image
@@ -669,6 +671,15 @@ def create_checkpoint_callback(checkpoint_path=\
                                                            verbose=1)
 
   return checkpoint_callback
+
+# Create an early stopping callback, only saving the model weights
+def create_early_stopping_callback(monitor="loss", patience=2, restore_best_weights=False):
+  early_stopping_callback = tf.keras.callbacks.EarlyStopping(monitor=monitor,
+                                                           patience=patience,
+                                                           verbose=1,
+                                                           restore_best_weights=restore_best_weights)
+
+  return early_stopping_callback
 
 ############################### Model Creation
 
@@ -882,7 +893,7 @@ def create_tuned_baseline_model(train_data, test_data, \
 
 
   # Evaluate the fine-tuned model
-  print("----- 4. Evaluate the fine-tuned -----")
+  print("----- 4. Evaluate the fine-tuned model -----")
   model.evaluate(test_data)
 
   # Save the fine-tuned model
