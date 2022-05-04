@@ -82,7 +82,7 @@ def preprocess_image_from_tfds(image, label, image_shape=224):
   image = tf.image.resize(image, [image_shape, image_shape])
   return tf.cast(image, tf.float32), label
 
-def show_tfds_sample(train_data):
+def show_tfds_sample(train_data, class_names):
     # Take one sample
     train_one_sample = train_data.take(1)
     train_one_sample
@@ -127,7 +127,7 @@ def get_tfds_data(name="pet_finder", IMG_SIZE = (224, 224), as_supervised=True, 
 
     # Output information about this sample
     if show_sample:
-        show_tfds_sample(train_data)
+        show_tfds_sample(train_data, class_names)
 
     # Map preprocessing function to training/test data and paralelise the execution
     train_data = train_data.map(map_func=preprocess_image_from_tfds,
