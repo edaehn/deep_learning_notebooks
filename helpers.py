@@ -7,6 +7,7 @@
 ############################### Importing required libraries
 
 import tensorflow as tf
+import tensorflow_datasets as tfds
 import tensorflow_hub as hub
 from tensorflow.keras import layers
 import pandas as pd
@@ -70,6 +71,79 @@ def get_classnames(dataset_train_directory="sample_data/birds/train/"):
   return class_names
 
 ############################### Getting datasets
+
+# Tensor values are converted to float32 (from uint8), and
+# image_shape is good to be in multiple of 8 (good with GPU)
+def preprocess_image_from_tfds(image, label, image_shape=224):
+  """
+  Preprocess an image from TFDS to be in float32 data type, and image size of [image_shape, image_shape, color_channels_number].
+  """
+
+  image = tf.image.resize(image, [image_shape, image_shape])
+  return tf.cast(image, tf.float32), label
+
+def show_tfds_sample(train_data):
+    # Take one sample
+    train_one_sample = train_data.take(1)
+    train_one_sample
+
+    for image, label in train_one_sample:
+        print(f"""
+        Image shape: {image.shape}
+        Image datatype: {image.dtype}
+        Target class (tensor form): {label}
+        Class name: {class_names[label.numpy()]}
+    """)
+
+    # Min and max values of the tensor
+    tf.reduce_min(image), tf.reduce_max(image)
+
+    # Plot the image
+    plt.imshow(image)
+    plt.title(class_names[label.numpy()])
+    plt.axis(False);
+
+    # Preprocess the image
+    preprocesed_image = preprocess_image_from_tfds(image, label)[0]
+    print(f"Image before preprocessing:\ {image[:2]} \n \
+            Data type: {image.dtype} \n \
+            Shape: {image.shape} \n \
+            Image preprocessed: {preprocesed_image[:2]} \n \
+            Shape preprocessed: {preprocesed_image.shape} \n \
+            Data type of the preprocessed image: {preprocesed_image.dtype} \n ")
+
+
+
+def get_tfds_data(name="pet_finder", IMG_SIZE = (224, 224), as_supervised=True, show_sample=True):
+    (train_data, test_data), dataset_info = tfds.load(name=name,
+                                                      split=["train", "validation"],
+                                                      shuffle_files=True,
+                                                      as_supervised=as_supervised,
+                                                      with_info=True)
+    print(dataset_info)
+
+    # Get class names
+    class_names = dataset_info.features["label"].names
+
+    # Output information about this sample
+    if show_sample:
+        show_tfds_sample(train_data)
+
+    # Map preprocessing function to training/test data and paralelise the execution
+    train_data = train_data.map(map_func=preprocess_image_from_tfds,
+                            num_parallel_calls=tf.data.AUTOTUNE)
+
+    test_data = test_data.map(map_func=preprocess_image_from_tfds,
+                            num_parallel_calls=tf.data.AUTOTUNE)
+
+    # Shuffle train_data, turn it into batches and prefetch it (load it faster)
+    # Ideally, buffer_size=len(train_data) but it consumes a cosniderable memory
+    # Herein it shuffles 1000 times at a time
+    train_data = train_data.shuffle(buffer_size=1000).\
+        batch(batch_size=32).\
+        prefetch(buffer_size=tf.data.AUTOTUNE)
+
+    return train_data, test_data, class_names
 
 def get_image_data(dataset_path="sample_data/birds", IMG_SIZE = (224, 224)):
     """
