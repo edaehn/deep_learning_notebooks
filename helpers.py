@@ -207,7 +207,8 @@ def get_normalised_image_data(directory="10_food_classes_10_percent",
     test_data = test_datagen.flow_from_directory(test_dir,
                                                             target_size=IMAGE_SHAPE,
                                                             batch_size=BATCH_SIZE,
-                                                            class_mode=class_mode)
+                                                            class_mode=class_mode,
+                                                            shuffle=False)
     return train_data, test_data
 
 ############################### Preprocessing data
@@ -247,7 +248,7 @@ def preprocess_and_augment_data(directory="sample_data/birds"):
                                              target_size=(224, 224),
                                              batch_size=32,
                                              class_mode="categorical",
-                                             shuffle=True)
+                                             shuffle=False)
     return train_data_augmented, test_data
 
 
