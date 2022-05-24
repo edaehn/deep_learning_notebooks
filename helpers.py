@@ -167,7 +167,8 @@ def get_image_data(dataset_path="sample_data/birds", IMG_SIZE = (224, 224)):
     test_data = tf.keras.preprocessing.image_dataset_from_directory(
         test_directory,
         label_mode="categorical",
-        image_size=IMG_SIZE
+        image_size=IMG_SIZE,
+        shuffle=False
     )
 
     # Return datasets
