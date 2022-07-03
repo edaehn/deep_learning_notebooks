@@ -255,28 +255,32 @@ def preprocess_and_augment_data(directory="sample_data/birds"):
 
 ############################### Plotting performance curves
 
-def plot_loss_curves(history, metric="accuracy"):
+def plot_loss_curves(history, metric="accuracy", save_fig=False):
     """
     Plot loss and performance (defaults to accuracy) curves for
     training and validation history
     :param history: History of model fitting
     :param metric: defaults to accuracy
+    :param save_fig: when True, save the graph into "loss_accuracy_plot.pdf"
     :return: True if the metric data is in the history object, otherwise False
     """
     if not(metric in history.history.keys()):
         return False
 
     loss = history.history["loss"]
-    val_loss = history.history["val_loss"]
+    if "val_loss" in history.history:
+        val_loss = history.history["val_loss"]
 
     accuracy = history.history[metric]
-    val_accuracy = history.history["val_"+metric]
+    if "val_"+metric in history.history:
+        val_accuracy = history.history["val_"+metric]
 
-    epochs = range(len(history.history["loss"]))
+    epochs = range(len(history.history[metric]))
 
     # Plot loss
     plt.plot(epochs, loss, label="Training loss")
-    plt.plot(epochs, val_loss, label="Validation loss")
+    if "val_loss" in history.history:
+        plt.plot(epochs, val_loss, label="Validation loss")
     plt.title("Loss")
     plt.xlabel("epochs")
     plt.legend()
@@ -284,13 +288,15 @@ def plot_loss_curves(history, metric="accuracy"):
     # Plot the accuracy or other metric
     plt.figure();
     plt.plot(epochs, accuracy, label="Training "+metric)
-    plt.plot(epochs, val_accuracy, label="Validation "+metric)
+    if "val_loss" in history.history:
+        plt.plot(epochs, val_accuracy, label="Validation "+metric)
 
     plt.title(metric)
     plt.xlabel("epochs")
     plt.legend()
+    if save_fig:
+        plt.savefig("loss_accuracy_plot.pdf")
     return True
-
 
 def compare_histories(original_history, new_history, initial_epochs=5):
     """
